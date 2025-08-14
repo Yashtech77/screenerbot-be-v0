@@ -1,20 +1,26 @@
+import os
 import re
 from flask import Flask, render_template, request, jsonify
 import requests
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
 
 app = Flask(__name__)
-CORS(app) 
-# Vapi configuration
-VAPI_API_KEY = "0f0a5b82-c9d4-4db5-8c9f-075c0f155897"#private key
-VAPI_BASE_URL = "https://api.vapi.ai"
-ASSISTANT_ID = "fe02f58c-3e25-45a9-85b1-80457f6dcefb"
-VAPI_PHONE_NUMBER_ID = "a9801017-89b1-4fa0-9496-84b19131502b"  # Your Vapi phone number ID
+CORS(app)
 
+# Vapi configuration from .env
+VAPI_API_KEY = os.getenv("VAPI_API_KEY")
+VAPI_BASE_URL = os.getenv("VAPI_BASE_URL")
+ASSISTANT_ID = os.getenv("ASSISTANT_ID")
+VAPI_PHONE_NUMBER_ID = os.getenv("VAPI_PHONE_NUMBER_ID")
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 
 @app.route('/make-outbound-call', methods=['POST'])
