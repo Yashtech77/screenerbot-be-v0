@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Calling Bot | Enterprise Solution</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #5e35b1;
+            --primary-dark: #4527a0;
+            --accent: #ff7043;
+            --success: #43a047;
+            --danger: #e53935;
+            --light: #f5f5f5;
+            --dark: #263238;
+            --text-light: #eceff1;
+            --shadow: 0 10px 20px rgba(0,0,0,0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .call-container {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .call-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--text-light);
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+
+        .call-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .call-header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        .call-content {
+            padding: 30px;
+            position: relative;
+        }
+
+        .call-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            margin: -80px auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            border: 4px solid white;
+            position: relative;
+            z-index: 2;
+        }
+
+        .call-avatar i {
+            font-size: 3rem;
+            color: white;
+        }
+
+        .call-status {
+            margin: 20px 0;
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(94, 53, 177, 0.1);
+            color: var(--primary);
+            font-size: 0.9rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .call-status.active {
+            display: flex;
+        }
+
+        .call-button {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(94, 53, 177, 0.3);
+        }
+
+        .call-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(94, 53, 177, 0.4);
+        }
+
+        .call-button.active {
+            background: var(--danger);
+            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.3);
+        }
+
+        .call-button.active:hover {
+            background: #c62828;
+        }
+
+        .call-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .feature-card i {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .feature-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .feature-card p {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        /* Outbound Call Section */
+        .outbound-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .outbound-section h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .call-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .call-input-group input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .call-button.secondary {
+            background: var(--success);
+            box-shadow: 0 4px 15px rgba(67, 160, 71, 0.3);
+        }
+
+        .call-button.secondary:hover {
+            background: #388e3c;
+            box-shadow: 0 6px 20px rgba(67, 160, 71, 0.4);
+        }
+
+        .call-footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 0.75rem;
+            color: #78909c;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* Management Panel */
+        .management-panel {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, var(--accent), #f57c00);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .panel-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .panel-content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .section h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .upload-section {
+            margin-bottom: 20px;
+        }
+
+        .upload-section input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .upload-section label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .upload-section small {
+            display: block;
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .upload-button:hover {
+            background: #f57c00;
+        }
+
+        .upload-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* System Prompt Section */
+        .prompt-section {
+            margin-bottom: 20px;
+        }
+
+        .input-toggle {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-toggle button {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .input-toggle button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        #system-prompt {
+            width: 100%;
+            padding: 10px;
+            font-family: monospace;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* CSV Upload Section */
+        .csv-upload {
+            margin-bottom: 15px;
+        }
+
+        .preview-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .preview-section h4 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .numbers-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .number-item {
+            padding: 8px;
+            margin: 2px 0;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(94, 53, 177, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(94, 53, 177, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(94, 53, 177, 0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .call-header {
+                padding: 20px 15px;
+            }
+            .call-content {
+                padding: 20px 15px;
+            }
+            .call-features {
+                grid-template-columns: 1fr;
+            }
+            .call-input-group {
+                flex-direction: column;
+            }
+            .panel-content {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Call Interface -->
+        <div class="call-container">
+            <div class="call-header">
+                <h1>AI Calling Bot</h1>
+                <p>Enterprise-grade communication solution</p>
+            </div>
+
+            <div class="call-content">
+                <div class="call-avatar pulse">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+
+                <div class="call-status" id="call-status">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    <span>Ready to connect</span>
+                </div>
+
+                <button class="call-button" id="call-button">
+                    <i class="fas fa-phone-alt"></i>
+                    <span>Start Call</span>
+                </button>
+
+                <div class="call-features">
+                    <div class="feature-card">
+                        <i class="fas fa-bolt"></i>
+                        <h3>Instant Connect</h3>
+                        <p>Real-time calling</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>Analytics</h3>
+                        <p>Call insights</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Secure</h3>
+                        <p>Encrypted</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-infinity"></i>
+                        <h3>24/7</h3>
+                        <p>Always available</p>
+                    </div>
+                </div>
+                
+                <!-- Outbound Call Section -->
+                <div class="outbound-section">
+                    <h3>Make an Outbound Call</h3>
+                    <div class="call-input-group">
+                        <input 
+                            type="tel" 
+                            id="phone-number" 
+                            placeholder="Enter phone number (e.g. +14155550101)" 
+                            pattern="\+\d{8,15}"
+                            title="Format: +CountryCodeNumber (e.g. +14155550101)"
+                        >
+                        <button class="call-button secondary" id="outbound-call-button">
+                            <i class="fas fa-phone"></i>
+                            <span>Call Number</span>
+                        </button>
+                    </div>
+                    <div class="call-status" id="outbound-status" style="display: none;">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        <span>Ready to call</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="call-footer">
+                <p>© 2023 AI Calling Solutions. All rights reserved.</p>
+            </div>
+        </div>
+
+        <!-- Management Panel -->
+        <div class="management-panel">
+            <div class="panel-header">
+                <h2>Bot Management</h2>
+                <p>Configure your AI assistant</p>
+            </div>
+
+            <div class="panel-content">
+                <!-- File Upload Section -->
+                <div class="section">
+                    <h3><i class="fas fa-upload"></i> Knowledge Base Upload</h3>
+                    
+                    <div class="upload-section">
+                        <input type="file" id="knowledgeBase" accept=".txt,.pdf,.docx,.csv" multiple />
+                        <label>Knowledge Base Files</label>
+
+                        <button id="upload-button" class="upload-button">Upload Files</button>
+                        <div id="upload-status" class="status"></div>
+                    </div>
+                </div>
+
+                <!-- CSV Upload and Batch Calls Section -->
+                <div class="section">
+                    <h3><i class="fas fa-users"></i> Batch Outbound Calls</h3>
+                    
+                    <div class="upload-section">
+                        <div class="csv-upload">
+                            <input type="file" id="numbersCsv" accept=".csv" />
+                            <label>Upload Phone Numbers CSV</label>
+                            <small>CSV should contain phone numbers in E.164 format (+CountryCodeNumber)</small>
+                        </div>
+
+                        <div class="preview-section" style="display: none;" id="csv-preview">
+                            <h4>Numbers Preview</h4>
+                            <div id="numbers-list" class="numbers-list"></div>
+                            <button id="start-calls-button" class="upload-button">Start Outbound Calls</button>
+                        </div>
+
+                        <div id="batch-call-status" class="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h3><i class="fas fa-robot"></i> Create New Assistant</h3>
+            <form id="create-assistant-form">
+                <div class="form-group">
+                    <label>Bot Name</label>
+                    <input type="text" id="bot-name" required>
+                </div>
+                <div class="form-group">
+                    <label>First Message</label>
+                    <textarea id="first-message"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="interruptions-enabled" checked>
+                        Enable First Message Interruptions
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>System Prompt</label>
+                    <textarea id="system-prompt"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>End Call Message</label>
+                    <input type="text" id="end-call-message">
+                </div>
+                <button type="submit">Create Assistant</button>
+                <div id="create-assistant-status" class="status"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Call Interface
+            const callButton = document.getElementById('call-button');
+            const callStatus = document.getElementById('call-status');
+            const buttonIcon = callButton.querySelector('i');
+            const buttonText = callButton.querySelector('span');
+            let vapiInstance = null;
+            
+            // Configuration
+            const config = {
+                assistantId: "1d854369-f262-4c77-a0c3-5b0774346227",
+                apiKey: "1267e6c8-4af0-4c16-8367-7af22c64c399",//public Key
+                buttonConfig: {
+                    color: "#5e35b1",
+                    icon: "phone"
+                }
+            };
+
+            // Load Vapi SDK
+            const script = document.createElement('script');
+            script.src = "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+            script.defer = true;
+            script.async = true;
+            
+            script.onload = function() {
+                callButton.addEventListener('click', function() {
+                    if (!vapiInstance) {
+                        // Update UI for calling state
+                        callStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Connecting...';
+                        callStatus.classList.add('active');
+                        callButton.classList.add('active');
+                        buttonIcon.className = 'fas fa-phone-slash';
+                        buttonText.textContent = 'End Call';
+                        
+                        // Start the call
+                        vapiInstance = window.vapiSDK.run({
+                            apiKey: config.apiKey,
+                            assistant: config.assistantId,
+                            config: config.buttonConfig
+                        });
+                        
+                        // Call event handlers
+                        vapiInstance.on('call-start', () => {
+                            callStatus.innerHTML = '<i class="fas fa-microphone"></i> Call connected - speaking...';
+                            document.querySelector('.call-avatar').classList.add('pulse');
+                        });
+                        
+                        vapiInstance.on('call-end', () => {
+                            callStatus.innerHTML = '<i class="fas fa-check-circle"></i> Call completed';
+                            setTimeout(() => callStatus.classList.remove('active'), 2000);
+                            callButton.classList.remove('active');
+                            buttonIcon.className = 'fas fa-phone-alt';
+                            buttonText.textContent = 'Start Call';
+                            document.querySelector('.call-avatar').classList.remove('pulse');
+                            vapiInstance = null;
+                        });
+                        
+                        vapiInstance.on('error', (error) => {
+                            callStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error: ${error.message}`;
+                            callButton.classList.remove('active');
+                            buttonIcon.className = 'fas fa-phone-alt';
+                            buttonText.textContent = 'Start Call';
+                            document.querySelector('.call-avatar').classList.remove('pulse');
+                        });
+                        
+                    } else {
+                        // End the call
+                        vapiInstance.stop();
+                        vapiInstance = null;
+                    }
+                });
+                
+                // Outbound call functionality
+                const outboundCallButton = document.getElementById('outbound-call-button');
+                const outboundStatus = document.getElementById('outbound-status');
+                const phoneInput = document.getElementById('phone-number');
+
+                outboundCallButton.addEventListener('click', async function() {
+                    const phoneNumber = phoneInput.value.trim();
+                    
+                    if (!phoneNumber) {
+                        outboundStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Please enter a phone number';
+                        outboundStatus.style.display = 'flex';
+                        return;
+                    }
+                    
+                    // Validate phone number format (E.164: + followed by 8-15 digits)
+                    const phoneRegex = /^\+\d{8,15}$/;
+                    if (!phoneRegex.test(phoneNumber)) {
+                        outboundStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Invalid format. Use +CountryCodeNumber (8-15 digits)';
+                        outboundStatus.style.display = 'flex';
+                        return;
+                    }
+                    
+                    try {
+                        // Update UI
+                        outboundStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Initiating call...';
+                        outboundStatus.style.display = 'flex';
+                        outboundCallButton.disabled = true;
+                        
+                        // Call Flask API
+                        const response = await fetch('/make-outbound-call', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ phoneNumber })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            outboundStatus.innerHTML = `<i class="fas fa-check-circle"></i> ${result.message}`;
+                            
+                            // Reset after 5 seconds
+                            setTimeout(() => {
+                                outboundStatus.style.display = 'none';
+                                phoneInput.value = '';
+                            }, 5000);
+                        } else {
+                            outboundStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${result.message}`;
+                        }
+                    } catch (error) {
+                        outboundStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Network error: ${error.message}`;
+                    } finally {
+                        outboundCallButton.disabled = false;
+                    }
+                });
+            };
+            
+            document.head.appendChild(script);
+
+            // File Upload Section
+            const uploadButton = document.getElementById('upload-button');
+            const uploadStatus = document.getElementById('upload-status');
+            const knowledgeBaseInput = document.getElementById('knowledgeBase');
+
+            uploadButton.addEventListener('click', async function() {
+                // Validate files
+                if (!knowledgeBaseInput.files[0]) {
+                    uploadStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Please select a knowledge base file';
+                    uploadStatus.className = 'status error';
+                    uploadStatus.style.display = 'flex';
+                    return;
+                }
+
+                try {
+                    // Update UI
+                    uploadStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Uploading files...';
+                    uploadStatus.className = 'status info';
+                    uploadStatus.style.display = 'flex';
+                    uploadButton.disabled = true;
+
+                    // Create FormData object
+                    const formData = new FormData();
+                    
+                    // Add knowledge base files
+                    for (let file of knowledgeBaseInput.files) {
+                        formData.append('knowledgeBase', file);
+                    }
+
+                    // Call your backend API
+                    const response = await fetch('/upload-files', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Upload failed');
+                    }
+
+                    uploadStatus.innerHTML = '<i class="fas fa-check"></i> Files uploaded successfully';
+                    uploadStatus.className = 'status success';
+                } catch (error) {
+                    uploadStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Upload failed: ' + error.message;
+                    uploadStatus.className = 'status error';
+                } finally {
+                    uploadButton.disabled = false;
+                }
+            });
+
+            // CSV Upload and Batch Calls
+            const csvInput = document.getElementById('numbersCsv');
+            const csvPreview = document.getElementById('csv-preview');
+            const numbersList = document.getElementById('numbers-list');
+            const startCallsButton = document.getElementById('start-calls-button');
+            const batchCallStatus = document.getElementById('batch-call-status');
+
+            let phoneNumbers = [];
+
+            csvInput.addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    const numbers = text.split('\n')
+                        .map(line => line.trim())
+                        .filter(number => number); // Remove empty lines
+
+                    // Validate phone numbers (E.164 format)
+                    const phoneRegex = /^\+\d{8,15}$/;
+                    const invalidNumbers = numbers.filter(num => !phoneRegex.test(num));
+                    
+                    if (invalidNumbers.length > 0) {
+                        throw new Error(`Invalid phone numbers found: ${invalidNumbers.join(', ')}`);
+                    }
+
+                    phoneNumbers = numbers;
+
+                    // Show preview
+                    numbersList.innerHTML = numbers.map(num => 
+                        `<div class="number-item">${num}</div>`
+                    ).join('');
+                    csvPreview.style.display = 'block';
+
+                } catch (error) {
+                    batchCallStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${error.message}`;
+                    batchCallStatus.className = 'status error';
+                    batchCallStatus.style.display = 'flex';
+                    csvPreview.style.display = 'none';
+                }
+            });
+
+            startCallsButton.addEventListener('click', async function() {
+                if (!phoneNumbers.length) {
+                    batchCallStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> No valid phone numbers found';
+                    batchCallStatus.className = 'status error';
+                    batchCallStatus.style.display = 'flex';
+                    return;
+                }
+
+                try {
+                    batchCallStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Initiating batch calls...';
+                    batchCallStatus.className = 'status info';
+                    batchCallStatus.style.display = 'flex';
+                    startCallsButton.disabled = true;
+
+                    // Call your backend API for batch outbound calls
+                    const response = await fetch('/make-batch-calls', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            customers: phoneNumbers.map(number => ({ number }))
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to initiate calls');
+                    }
+
+                    batchCallStatus.innerHTML = '<i class="fas fa-check"></i> Batch calls initiated successfully';
+                    batchCallStatus.className = 'status success';
+
+                } catch (error) {
+                    batchCallStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${error.message}`;
+                    batchCallStatus.className = 'status error';
+                } finally {
+                    startCallsButton.disabled = false;
+                }
+            });
+
+            document.getElementById('create-assistant-form').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const name = document.getElementById('bot-name').value;
+                const firstMessage = document.getElementById('first-message').value;
+                const firstMessageInterruptionsEnabled = document.getElementById('interruptions-enabled').checked;
+                const systemPrompt = document.getElementById('system-prompt').value;
+                const endCallMessage = document.getElementById('end-call-message').value;
+                const statusDiv = document.getElementById('create-assistant-status');
+                statusDiv.textContent = '';
+                statusDiv.className = 'status';
+                try {
+                    const response = await fetch('/create-assistant', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            firstMessage,
+                            firstMessageInterruptionsEnabled,
+                            systemPrompt,
+                            endCallMessage
+                        })
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        statusDiv.textContent = 'Assistant created! ID: ' + result.id;
+                        statusDiv.className = 'status success';
+                    } else {
+                        statusDiv.textContent = 'Error: ' + (result.error || 'Failed to create assistant');
+                        statusDiv.className = 'status error';
+                    }
+                } catch (err) {
+                    statusDiv.textContent = 'Network error: ' + err.message;
+                    statusDiv.className = 'status error';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
