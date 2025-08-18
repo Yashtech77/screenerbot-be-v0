@@ -76,52 +76,26 @@ def make_outbound_call():
             "success": False,
             "message": f"Server error: {str(e)}"
         }), 500
-
 @app.route('/create-assistant', methods=['POST'])
 def create_assistant():
     try:
         data = request.json
-
+ 
         # Require bot name from frontend
         assistant_name = data.get('name')
         if not assistant_name or assistant_name.strip() == "":
             return jsonify({'error': 'Assistant name is required and cannot be empty'}), 400
-
+ 
         # Require first message
         if not data.get('firstMessage'):
             return jsonify({'error': 'firstMessage is required from frontend'}), 400
-
+ 
         # Require system prompt
         system_prompt = data.get('content') or data.get('systemPrompt')
         if not system_prompt or system_prompt.strip() == "":
             return jsonify({'error': 'content or systemPrompt is required and cannot be empty from frontend'}), 400
-
-        # Build assistant config (no voicemailMessage)
-        # assistant_config = {
-        #     'name': assistant_name,
-        #     'firstMessage': data['firstMessage'],
-        #     'firstMessageInterruptionsEnabled': data.get('firstMessageInterruptionsEnabled', True),
-        #     'endCallMessage': data.get('endCallMessage', 'Thank you for your time. Goodbye.'),
-        #     'model': {
-        #         'provider': 'openai',
-        #         'model': 'gpt-4',
-        #         'messages': [
-        #             {
-        #                 'role': 'system',
-        #                 'content': system_prompt
-        #             }
-        #         ]
-        #     },
-        #     'voice': {
-        #         'provider': 'vapi',
-        #         'voiceId': 'Neha'
-        #     },
-        #     'transcriber': {
-        #         'provider': 'deepgram',
-        #         'model': 'nova-2',
-        #         'language': 'en'
-        #     }
-        # }
+ 
+        # Build assistant config with hooks
         assistant_config = {
             'name': assistant_name,
             'firstMessage': data['firstMessage'],
@@ -145,10 +119,25 @@ def create_assistant():
                 'provider': 'deepgram',
                 'model': 'nova-2',
                 'language': 'en'
-            }
+            },
+            # Added hooks configuration
+            'hooks': [{
+                'on': 'customer.speech.timeout',
+                'options': {
+                    'timeoutSeconds': 10,
+                    'triggerMaxCount': 2,
+                    'triggerResetMode': 'onUserSpeech'
+                },
+                'do': [{
+                    'type': 'say',
+                    'prompt': 'Are you still there? Please let me know how I can help you.'
+                }],
+                'name': 'customer_timeout_check'
+            }]
         }
+ 
         print("Sending to VAPI:", assistant_config)
-
+ 
         response = requests.post(
             'https://api.vapi.ai/assistant',
             headers={
@@ -157,18 +146,110 @@ def create_assistant():
             },
             json=assistant_config
         )
-
+ 
         if not response.ok:
             print(f"VAPI error: {response.status_code} - {response.text}")
             raise Exception(f'Failed to create assistant: {response.text}')
-
+ 
         result = response.json()
         print(f"Successfully created assistant with ID: {result.get('id')}")
         return jsonify(result)
-
+ 
     except Exception as e:
         print(f"Error creating assistant: {str(e)}")
         return jsonify({'error': str(e)}), 500
+# @app.route('/create-assistant', methods=['POST'])
+# def create_assistant():
+#     try:
+#         data = request.json
+
+#         # Require bot name from frontend
+#         assistant_name = data.get('name')
+#         if not assistant_name or assistant_name.strip() == "":
+#             return jsonify({'error': 'Assistant name is required and cannot be empty'}), 400
+
+#         # Require first message
+#         if not data.get('firstMessage'):
+#             return jsonify({'error': 'firstMessage is required from frontend'}), 400
+
+#         # Require system prompt
+#         system_prompt = data.get('content') or data.get('systemPrompt')
+#         if not system_prompt or system_prompt.strip() == "":
+#             return jsonify({'error': 'content or systemPrompt is required and cannot be empty from frontend'}), 400
+
+#         # Build assistant config (no voicemailMessage)
+#         # assistant_config = {
+#         #     'name': assistant_name,
+#         #     'firstMessage': data['firstMessage'],
+#         #     'firstMessageInterruptionsEnabled': data.get('firstMessageInterruptionsEnabled', True),
+#         #     'endCallMessage': data.get('endCallMessage', 'Thank you for your time. Goodbye.'),
+#         #     'model': {
+#         #         'provider': 'openai',
+#         #         'model': 'gpt-4',
+#         #         'messages': [
+#         #             {
+#         #                 'role': 'system',
+#         #                 'content': system_prompt
+#         #             }
+#         #         ]
+#         #     },
+#         #     'voice': {
+#         #         'provider': 'vapi',
+#         #         'voiceId': 'Neha'
+#         #     },
+#         #     'transcriber': {
+#         #         'provider': 'deepgram',
+#         #         'model': 'nova-2',
+#         #         'language': 'en'
+#         #     }
+#         # }
+#         assistant_config = {
+#             'name': assistant_name,
+#             'firstMessage': data['firstMessage'],
+#             'firstMessageInterruptionsEnabled': data.get('firstMessageInterruptionsEnabled', True),
+#             'endCallMessage': data.get('endCallMessage', 'Thank you for your time. Goodbye.'),
+#             'model': {
+#                 'provider': 'openai',
+#                 'model': 'gpt-4',
+#                 'messages': [
+#                     {
+#                         'role': 'system',
+#                         'content': system_prompt
+#                     }
+#                 ]
+#             },
+#             'voice': {
+#                 'provider': 'vapi',
+#                 'voiceId': 'Neha'
+#             },
+#             'transcriber': {
+#                 'provider': 'deepgram',
+#                 'model': 'nova-2',
+#                 'language': 'en'
+#             }
+#         }
+#         print("Sending to VAPI:", assistant_config)
+
+#         response = requests.post(
+#             'https://api.vapi.ai/assistant',
+#             headers={
+#                 'Authorization': f'Bearer {VAPI_API_KEY}',
+#                 'Content-Type': 'application/json'
+#             },
+#             json=assistant_config
+#         )
+
+#         if not response.ok:
+#             print(f"VAPI error: {response.status_code} - {response.text}")
+#             raise Exception(f'Failed to create assistant: {response.text}')
+
+#         result = response.json()
+#         print(f"Successfully created assistant with ID: {result.get('id')}")
+#         return jsonify(result)
+
+#     except Exception as e:
+#         print(f"Error creating assistant: {str(e)}")
+#         return jsonify({'error': str(e)}), 500
 
 @app.route('/list-assistants', methods=['GET'])
 def list_assistants():
