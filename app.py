@@ -17,9 +17,7 @@ VAPI_BASE_URL = os.getenv("VAPI_BASE_URL")
 ASSISTANT_ID = os.getenv("ASSISTANT_ID")
 VAPI_PHONE_NUMBER_ID = os.getenv("VAPI_PHONE_NUMBER_ID")
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+
 
 
 
@@ -76,6 +74,8 @@ def make_outbound_call():
             "success": False,
             "message": f"Server error: {str(e)}"
         }), 500
+    
+    
 @app.route('/create-assistant', methods=['POST'])
 def create_assistant():
     try:
@@ -118,7 +118,7 @@ def create_assistant():
             'transcriber': {
                 'provider': 'deepgram',
                 'model': 'nova-2',
-                'language': 'en'
+                'language': 'multi'
             },
             # Added hooks configuration
             'hooks': [{
@@ -158,98 +158,7 @@ def create_assistant():
     except Exception as e:
         print(f"Error creating assistant: {str(e)}")
         return jsonify({'error': str(e)}), 500
-# @app.route('/create-assistant', methods=['POST'])
-# def create_assistant():
-#     try:
-#         data = request.json
 
-#         # Require bot name from frontend
-#         assistant_name = data.get('name')
-#         if not assistant_name or assistant_name.strip() == "":
-#             return jsonify({'error': 'Assistant name is required and cannot be empty'}), 400
-
-#         # Require first message
-#         if not data.get('firstMessage'):
-#             return jsonify({'error': 'firstMessage is required from frontend'}), 400
-
-#         # Require system prompt
-#         system_prompt = data.get('content') or data.get('systemPrompt')
-#         if not system_prompt or system_prompt.strip() == "":
-#             return jsonify({'error': 'content or systemPrompt is required and cannot be empty from frontend'}), 400
-
-#         # Build assistant config (no voicemailMessage)
-#         # assistant_config = {
-#         #     'name': assistant_name,
-#         #     'firstMessage': data['firstMessage'],
-#         #     'firstMessageInterruptionsEnabled': data.get('firstMessageInterruptionsEnabled', True),
-#         #     'endCallMessage': data.get('endCallMessage', 'Thank you for your time. Goodbye.'),
-#         #     'model': {
-#         #         'provider': 'openai',
-#         #         'model': 'gpt-4',
-#         #         'messages': [
-#         #             {
-#         #                 'role': 'system',
-#         #                 'content': system_prompt
-#         #             }
-#         #         ]
-#         #     },
-#         #     'voice': {
-#         #         'provider': 'vapi',
-#         #         'voiceId': 'Neha'
-#         #     },
-#         #     'transcriber': {
-#         #         'provider': 'deepgram',
-#         #         'model': 'nova-2',
-#         #         'language': 'en'
-#         #     }
-#         # }
-#         assistant_config = {
-#             'name': assistant_name,
-#             'firstMessage': data['firstMessage'],
-#             'firstMessageInterruptionsEnabled': data.get('firstMessageInterruptionsEnabled', True),
-#             'endCallMessage': data.get('endCallMessage', 'Thank you for your time. Goodbye.'),
-#             'model': {
-#                 'provider': 'openai',
-#                 'model': 'gpt-4',
-#                 'messages': [
-#                     {
-#                         'role': 'system',
-#                         'content': system_prompt
-#                     }
-#                 ]
-#             },
-#             'voice': {
-#                 'provider': 'vapi',
-#                 'voiceId': 'Neha'
-#             },
-#             'transcriber': {
-#                 'provider': 'deepgram',
-#                 'model': 'nova-2',
-#                 'language': 'en'
-#             }
-#         }
-#         print("Sending to VAPI:", assistant_config)
-
-#         response = requests.post(
-#             'https://api.vapi.ai/assistant',
-#             headers={
-#                 'Authorization': f'Bearer {VAPI_API_KEY}',
-#                 'Content-Type': 'application/json'
-#             },
-#             json=assistant_config
-#         )
-
-#         if not response.ok:
-#             print(f"VAPI error: {response.status_code} - {response.text}")
-#             raise Exception(f'Failed to create assistant: {response.text}')
-
-#         result = response.json()
-#         print(f"Successfully created assistant with ID: {result.get('id')}")
-#         return jsonify(result)
-
-#     except Exception as e:
-#         print(f"Error creating assistant: {str(e)}")
-#         return jsonify({'error': str(e)}), 500
 
 @app.route('/list-assistants', methods=['GET'])
 def list_assistants():
@@ -267,40 +176,46 @@ def list_assistants():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-@app.route('/make-batch-calls', methods=['POST'])
-def make_batch_calls():
+@app.route('/create-campaign', methods=['POST'])
+def create_campaign():
+    data = request.json
+    campaign_name = data.get('name')
+    phone_number_id = data.get('phoneNumberId')
+    assistant_id = data.get('assistantId')
+    customers = data.get('customers')
+ 
+    if not campaign_name or not phone_number_id or not assistant_id or not customers:
+        return jsonify({"success": False, "message": "All campaign fields are required"}), 400
+ 
+    headers = {
+        "Authorization": f"Bearer {VAPI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "name": campaign_name,
+        "phoneNumberId": phone_number_id,
+        "assistantId": assistant_id,
+        "customers": customers
+    }
+ 
     try:
-        data = request.json
-        phone_numbers = data['customers']
-
-        # Call Vapi's API for batch outbound calls
         response = requests.post(
-            'https://api.vapi.ai/call',
-            headers={
-                'Authorization': f'Bearer {VAPI_API_KEY}',
-                'Content-Type': 'application/json'
-            },
-            json={
-                "assistantId": ASSISTANT_ID,
-                "phoneNumberId": VAPI_PHONE_NUMBER_ID,
-                "customers": phone_numbers
-                # Optionally add schedulePlan if needed
-                # "schedulePlan": {
-                #     "earliestAt": "2025-05-30T00:00:00Z"
-                # }
-            }
+            f"{VAPI_BASE_URL}/campaign",
+            headers=headers,
+            json=payload
         )
-
-        if not response.ok:
-            raise Exception('Failed to initiate batch calls')
-
-        return jsonify({'success': True})
-
+        if response.status_code == 201:
+            return jsonify({"success": True, "campaign": response.json()})
+        else:
+            return jsonify({
+                "success": False,
+                "message": f"Vapi API error: {response.status_code} - {response.text}"
+            }), response.status_code
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
+        return jsonify({
+            "success": False,
+            "message": f"Server error: {str(e)}"
+        }), 500
 
 @app.route('/upload-files', methods=['POST'])
 def upload_files():
