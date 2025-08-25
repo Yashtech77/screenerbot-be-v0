@@ -18,7 +18,9 @@ ASSISTANT_ID = os.getenv("ASSISTANT_ID")
 VAPI_PHONE_NUMBER_ID = os.getenv("VAPI_PHONE_NUMBER_ID")
 
 
-
+@app.route("/", methods=["GET"])
+def root():
+    return jsonify({"ok": True, "service": "screenerbot", "version": "v1"})
 
 
 @app.route('/make-outbound-call', methods=['POST'])
