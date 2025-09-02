@@ -23,20 +23,78 @@ def root():
     return jsonify({"ok": True, "service": "screenerbot", "version": "v1"})
 
 
+# @app.route('/make-outbound-call', methods=['POST'])
+# def make_outbound_call():
+#     data = request.json
+#     phone_number = data.get('phoneNumber')
+    
+#     if not phone_number:
+#         return jsonify({"success": False, "message": "Phone number required"}), 400
+
+#     # Validate E.164 format
+#     if not re.match(r'^\+\d{8,15}$', phone_number):
+#         return jsonify({
+#             "success": False,
+#             "message": "Invalid phone format. Use E.164 format: +[country code][number] (8-15 digits)"
+#         }), 400
+
+#     try:
+#         headers = {
+#             "Authorization": f"Bearer {VAPI_API_KEY}",
+#             "Content-Type": "application/json"
+#         }
+        
+#         # Working payload structure
+#         payload = {
+#             "assistantId": ASSISTANT_ID,
+#             "phoneNumberId": VAPI_PHONE_NUMBER_ID,
+#             "customer": {
+#                 "number": phone_number
+#             }
+#  }
+        
+#         response = requests.post(
+#             f"{VAPI_BASE_URL}/call/phone",
+#             headers=headers,
+#             json=payload
+#         )
+        
+#         if response.status_code == 201:
+#             return jsonify({
+#                 "success": True,
+#                 "message": "Call initiated successfully",
+#                 "callId": response.json().get("id")
+#             })
+#         else:
+#             return jsonify({
+#                 "success": False,
+#                 "message": f"Vapi API error: {response.status_code} - {response.text}"
+#             }), response.status_code
+            
+#     except Exception as e:
+#         return jsonify({
+#             "success": False,
+#             "message": f"Server error: {str(e)}"
+#         }), 500
+    
 @app.route('/make-outbound-call', methods=['POST'])
 def make_outbound_call():
     data = request.json
     phone_number = data.get('phoneNumber')
+    assistant_id = data.get('assistantId')   # ✅ accept from frontend
+    knowledge_base_id = data.get('knowledgeBaseId')
     
     if not phone_number:
         return jsonify({"success": False, "message": "Phone number required"}), 400
 
-    # Validate E.164 format
     if not re.match(r'^\+\d{8,15}$', phone_number):
         return jsonify({
             "success": False,
             "message": "Invalid phone format. Use E.164 format: +[country code][number] (8-15 digits)"
         }), 400
+
+    if not assistant_id:
+        return jsonify({"success": False, "message": "Assistant ID required"}), 400
 
     try:
         headers = {
@@ -44,15 +102,16 @@ def make_outbound_call():
             "Content-Type": "application/json"
         }
         
-        # Working payload structure
         payload = {
-            "assistantId": ASSISTANT_ID,
+            "assistantId": assistant_id,                 # ✅ dynamic now
             "phoneNumberId": VAPI_PHONE_NUMBER_ID,
-            "customer": {
-                "number": phone_number
-            }
- }
-        
+            "customer": { "number": phone_number }
+        }
+
+        # optionally include knowledgeBaseId if passed
+        if knowledge_base_id:
+            payload["knowledgeBaseId"] = knowledge_base_id
+
         response = requests.post(
             f"{VAPI_BASE_URL}/call/phone",
             headers=headers,
@@ -76,8 +135,7 @@ def make_outbound_call():
             "success": False,
             "message": f"Server error: {str(e)}"
         }), 500
-    
-    
+
 @app.route('/create-assistant', methods=['POST'])
 def create_assistant():
     try:
