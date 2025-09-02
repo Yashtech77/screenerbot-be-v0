@@ -163,7 +163,7 @@ def create_assistant():
             'endCallMessage': data.get('endCallMessage', 'Thank you for your time. Goodbye.'),
             'model': {
                 'provider': 'openai',
-                'model': 'gpt-4',
+                'model': 'gpt-4.1-mini',
                 'messages': [
                     {
                         'role': 'system',
@@ -327,6 +327,25 @@ def delete_assistant(assistant_id):
             return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/call/<call_id>', methods=['GET'])
+def get_call(call_id):
+    try:
+        response = requests.get(
+            f"{VAPI_BASE_URL}/call/{call_id}",
+            headers={"Authorization": f"Bearer {VAPI_API_KEY}"}
+        )
+
+        if response.ok:
+            return jsonify(response.json())
+        else:
+            return jsonify({
+                "error": f"Vapi API error: {response.status_code} - {response.text}"
+            }), response.status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
