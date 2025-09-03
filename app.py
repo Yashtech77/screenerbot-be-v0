@@ -23,60 +23,6 @@ def root():
     return jsonify({"ok": True, "service": "screenerbot", "version": "v1"})
 
 
-# @app.route('/make-outbound-call', methods=['POST'])
-# def make_outbound_call():
-#     data = request.json
-#     phone_number = data.get('phoneNumber')
-    
-#     if not phone_number:
-#         return jsonify({"success": False, "message": "Phone number required"}), 400
-
-#     # Validate E.164 format
-#     if not re.match(r'^\+\d{8,15}$', phone_number):
-#         return jsonify({
-#             "success": False,
-#             "message": "Invalid phone format. Use E.164 format: +[country code][number] (8-15 digits)"
-#         }), 400
-
-#     try:
-#         headers = {
-#             "Authorization": f"Bearer {VAPI_API_KEY}",
-#             "Content-Type": "application/json"
-#         }
-        
-#         # Working payload structure
-#         payload = {
-#             "assistantId": ASSISTANT_ID,
-#             "phoneNumberId": VAPI_PHONE_NUMBER_ID,
-#             "customer": {
-#                 "number": phone_number
-#             }
-#  }
-        
-#         response = requests.post(
-#             f"{VAPI_BASE_URL}/call/phone",
-#             headers=headers,
-#             json=payload
-#         )
-        
-#         if response.status_code == 201:
-#             return jsonify({
-#                 "success": True,
-#                 "message": "Call initiated successfully",
-#                 "callId": response.json().get("id")
-#             })
-#         else:
-#             return jsonify({
-#                 "success": False,
-#                 "message": f"Vapi API error: {response.status_code} - {response.text}"
-#             }), response.status_code
-            
-#     except Exception as e:
-#         return jsonify({
-#             "success": False,
-#             "message": f"Server error: {str(e)}"
-#         }), 500
-    
 @app.route('/make-outbound-call', methods=['POST'])
 def make_outbound_call():
     data = request.json
@@ -317,6 +263,22 @@ def delete_assistant(assistant_id):
     try:
         response = requests.delete(
             f"https://api.vapi.ai/assistant/{assistant_id}",
+            headers={
+                "Authorization": f"Bearer {VAPI_API_KEY}"
+            }
+        )
+        if response.ok:
+            return jsonify(response.json())
+        else:
+            return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/get-call-logs', methods=['GET'])
+def get_call_logs():
+    try:
+        response = requests.get(
+            "https://api.vapi.ai/call",
             headers={
                 "Authorization": f"Bearer {VAPI_API_KEY}"
             }
