@@ -321,21 +321,46 @@ def create_assistant():
  
 
 
+# @app.route('/list-assistants', methods=['GET'])
+# def list_assistants():
+#     try:
+#         response = requests.get(
+#             "https://api.vapi.ai/assistant",
+#             headers={
+#                 "Authorization": f"Bearer {VAPI_API_KEY}"
+#             }
+#         )
+#         if response.ok:
+#             return jsonify(response.json())
+#         else:
+#             return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
+
+
 @app.route('/list-assistants', methods=['GET'])
 def list_assistants():
     try:
         response = requests.get(
             "https://api.vapi.ai/assistant",
-            headers={
-                "Authorization": f"Bearer {VAPI_API_KEY}"
-            }
+            headers={"Authorization": f"Bearer {VAPI_API_KEY}"}
         )
         if response.ok:
-            return jsonify(response.json())
+            data = response.json()
+            # Only return minimal info (e.g., first assistant’s ID + name)
+            if isinstance(data, list) and len(data) > 0:
+                return jsonify({
+                    "id": data[0].get("id"),
+                    "name": data[0].get("name", "")
+                })
+            return jsonify({"id": os.getenv("DEFAULT_ASSISTANT_ID")})
         else:
-            return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
+            return jsonify({
+                'error': f'Vapi API error: {response.status_code}'
+            }), response.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/create-campaign', methods=['POST'])
 def create_campaign():
