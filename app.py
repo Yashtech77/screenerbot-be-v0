@@ -179,24 +179,6 @@ def create_assistant():
     except Exception as e:
         print(f"Error creating assistant: {str(e)}")
         return jsonify({'error': str(e)}), 500
- 
-
-
-# @app.route('/list-assistants', methods=['GET'])
-# def list_assistants():
-#     try:
-#         response = requests.get(
-#             "https://api.vapi.ai/assistant",
-#             headers={
-#                 "Authorization": f"Bearer {VAPI_API_KEY}"
-#             }
-#         )
-#         if response.ok:
-#             return jsonify(response.json())
-#         else:
-#             return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/list-assistants', methods=['GET'])
@@ -314,22 +296,6 @@ def delete_assistant(assistant_id):
             return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-# @app.route('/get-call-logs', methods=['GET'])
-# def get_call_logs():
-#     try:
-#         response = requests.get(
-#             "https://api.vapi.ai/call",
-#             headers={
-#                 "Authorization": f"Bearer {VAPI_API_KEY}"
-#             }
-#         )
-#         if response.ok:
-#             return jsonify(response.json())
-#         else:
-#             return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
  
 @app.route('/get-call-logs', methods=['GET'])
 def get_call_logs():
@@ -357,52 +323,33 @@ def get_call_logs():
             return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-    
-# @app.route('/call/<call_id>', methods=['GET'])
-# def get_call(call_id):
-#     try:
-#         response = requests.get(
-#             f"{VAPI_BASE_URL}/call/{call_id}",
-#             headers={"Authorization": f"Bearer {VAPI_API_KEY}"}
-#         )
-
-#         if response.ok:
-#             return jsonify(response.json())
-#         else:
-#             return jsonify({
-#                 "error": f"Vapi API error: {response.status_code} - {response.text}"
-#             }), response.status_code
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
 @app.route('/call/<call_id>', methods=['GET'])
 def get_call(call_id):
-    """Fetch minimal call details (type, transcript, createdAt, recordingUrl)."""
+    """
+    Fetch minimal call details for frontend
+    """
     try:
         response = requests.get(
             f"{VAPI_BASE_URL}/call/{call_id}",
             headers={"Authorization": f"Bearer {VAPI_API_KEY}"}
         )
-
         if not response.ok:
-            return jsonify({"error": f"Vapi API error: {response.status_code}"}), response.status_code
+            return jsonify({"error": f"VAPI API error: {response.status_code}"}), response.status_code
 
         data = response.json()
-
-        # Pick only required fields
         result = {
+            "id": data.get("id"),
             "type": data.get("type"),
-            "transcript": data.get("transcript"),
+            "transcript": data.get("transcript") or data.get("messagesOpenAIFormatted"),
             "createdAt": data.get("createdAt") or data.get("startedAt"),
             "recordingUrl": None
         }
 
-        # Mask recording URL
+        # Proxy recording URL
         recording_url = data.get("recordingUrl") or (data.get("artifacts") or [{}])[0].get("recordingUrl")
         if recording_url:
             recording_id = recording_url.split("/")[-1]
-            extension = recording_id.split('.')[-1]  # wav or mp3
+            extension = recording_id.split('.')[-1] if '.' in recording_id else "wav"
             result["recordingUrl"] = f"/recording/{recording_id}?ext={extension}"
 
         return jsonify(result)
@@ -413,14 +360,16 @@ def get_call(call_id):
 
 @app.route('/recording/<recording_id>', methods=['GET'])
 def get_recording(recording_id):
-    """Proxy Vapi recording and set correct MIME type."""
+    """
+    Proxy recording audio from VAPI
+    """
     try:
-        ext = request.args.get("ext", "wav").lower()  # default wav
+        ext = request.args.get("ext", "wav").lower()
         original_url = f"https://storage.vapi.ai/{recording_id}"
         response = requests.get(original_url, stream=True)
 
         if not response.ok:
-            return jsonify({"error": "Failed to fetch recording from Vapi", "status": response.status_code}), response.status_code
+            return jsonify({"error": "Failed to fetch recording from VAPI"}), response.status_code
 
         mimetype = "audio/wav" if ext == "wav" else "audio/mpeg"
 
@@ -430,10 +379,10 @@ def get_recording(recording_id):
             as_attachment=False,
             download_name=recording_id
         )
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
