@@ -180,7 +180,6 @@ def create_assistant():
         print(f"Error creating assistant: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/list-assistants', methods=['GET'])
 def list_assistants():
     try:
@@ -188,21 +187,35 @@ def list_assistants():
             "https://api.vapi.ai/assistant",
             headers={"Authorization": f"Bearer {VAPI_API_KEY}"}
         )
+
         if response.ok:
             data = response.json()
-            # Only return minimal info (e.g., first assistant’s ID + name)
+            # Return minimal info for all assistants
             if isinstance(data, list) and len(data) > 0:
-                return jsonify({
-                    "id": data[0].get("id"),
-                    "name": data[0].get("name", "")
-                })
-            return jsonify({"id": os.getenv("DEFAULT_ASSISTANT_ID")})
-        else:
-            return jsonify({
-                'error': f'Vapi API error: {response.status_code}'
-            }), response.status_code
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+                assistants = [
+                    {"id": item.get("id"), "name": item.get("name", "")}
+                    for item in data
+                ]
+                return jsonify(assistants)
+            return jsonify([{
+                "id": os.getenv("DEFAULT_ASSISTANT_ID"),
+                "name": "Default Assistant"
+            }])
+
+        # Mask error — no Vapi details shown
+        return jsonify({
+            'error': 'Unable to load assistants right now. Please try again later.'
+        }), 502
+
+    except requests.exceptions.RequestException:
+        return jsonify({
+            'error': 'Connection issue. Please try again later.'
+        }), 502
+
+    except Exception:
+        return jsonify({
+            'error': 'Something went wrong. Please contact support if it continues.'
+        }), 500
 
 
 @app.route('/create-campaign', methods=['POST'])
@@ -279,23 +292,35 @@ def upload_files():
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
+    
 @app.route('/delete-assistant/<assistant_id>', methods=['DELETE'])
 def delete_assistant(assistant_id):
     try:
         response = requests.delete(
             f"https://api.vapi.ai/assistant/{assistant_id}",
-            headers={
-                "Authorization": f"Bearer {VAPI_API_KEY}"
-            }
+            headers={"Authorization": f"Bearer {VAPI_API_KEY}"}
         )
+
         if response.ok:
-            return jsonify(response.json())
+            return jsonify({"message": "Assistant deleted successfully"}), 200
+        elif response.status_code == 404:
+            # Mask real API details
+            return jsonify({"error": "Assistant not found"}), 404
+        elif response.status_code == 401:
+            return jsonify({"error": "Unauthorized request"}), 401
         else:
-            return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+            return jsonify({
+                "error": "Failed to delete assistant. Please try again later."
+            }), 500
+    except requests.exceptions.RequestException:
+        return jsonify({
+            "error": "Network error while connecting to assistant service."
+        }), 502
+    except Exception:
+        return jsonify({
+            "error": "Unexpected server error."
+        }), 500
+
  
 @app.route('/get-call-logs', methods=['GET'])
 def get_call_logs():
