@@ -133,9 +133,18 @@ def create_assistant():
                     }
                 ]
             },
-            'voice': {
-                'provider': 'vapi',
-                'voiceId': 'Neha'
+            # 'voice': {
+            #     'provider': 'vapi',
+            #     'voiceId': 'Neha'
+            # },
+            # 'transcriber': {
+            #     'provider': 'deepgram',
+            #     'model': 'nova-2',
+            #     'language': 'multi'
+            # },
+             'voice': {
+                'provider': '11labs',
+                'voiceId': 'nlRBcodAo9LA6ChkhS0i'
             },
             'transcriber': {
                 'provider': 'deepgram',
@@ -348,10 +357,43 @@ def get_call_logs():
             return jsonify({'error': f'Vapi API error: {response.status_code} - {response.text}'}), response.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+# @app.route('/call/<call_id>', methods=['GET'])
+# def get_call(call_id):
+#     """
+#     Fetch minimal call details for frontend
+#     """
+#     try:
+#         response = requests.get(
+#             f"{VAPI_BASE_URL}/call/{call_id}",
+#             headers={"Authorization": f"Bearer {VAPI_API_KEY}"}
+#         )
+#         if not response.ok:
+#             return jsonify({"error": f"VAPI API error: {response.status_code}"}), response.status_code
+
+#         data = response.json()
+#         result = {
+#             "id": data.get("id"),
+#             "type": data.get("type"),
+#             "transcript": data.get("transcript") or data.get("messagesOpenAIFormatted"),
+#             "createdAt": data.get("createdAt") or data.get("startedAt"),
+#             "recordingUrl": None
+#         }
+
+#         # Proxy recording URL
+#         recording_url = data.get("recordingUrl") or (data.get("artifacts") or [{}])[0].get("recordingUrl")
+#         if recording_url:
+#             recording_id = recording_url.split("/")[-1]
+#             extension = recording_id.split('.')[-1] if '.' in recording_id else "wav"
+#             result["recordingUrl"] = f"/recording/{recording_id}?ext={extension}"
+
+#         return jsonify(result)
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 @app.route('/call/<call_id>', methods=['GET'])
 def get_call(call_id):
     """
-    Fetch minimal call details for frontend
+    Fetch minimal call details for frontend, including structured outputs
     """
     try:
         response = requests.get(
@@ -360,28 +402,43 @@ def get_call(call_id):
         )
         if not response.ok:
             return jsonify({"error": f"VAPI API error: {response.status_code}"}), response.status_code
-
+        
         data = response.json()
+        
+        # Extract structured outputs from the artifact section
+        structured_outputs = {}
+        artifact = data.get("artifact", {})
+        if "structuredOutputs" in artifact:
+            for key, value in artifact["structuredOutputs"].items():
+                name = value.get("name")
+                result_val = value.get("result")
+                if name:
+                    structured_outputs[name] = result_val
+        
         result = {
             "id": data.get("id"),
             "type": data.get("type"),
             "transcript": data.get("transcript") or data.get("messagesOpenAIFormatted"),
             "createdAt": data.get("createdAt") or data.get("startedAt"),
-            "recordingUrl": None
+            "recordingUrl": None,
+            "structuredOutputs": structured_outputs  # Use the extracted structured outputs
         }
-
-        # Proxy recording URL
-        recording_url = data.get("recordingUrl") or (data.get("artifacts") or [{}])[0].get("recordingUrl")
+        
+        # Proxy recording URL - check both locations
+        recording_url = (
+            data.get("recordingUrl") or 
+            artifact.get("recordingUrl")
+        )
+        
         if recording_url:
             recording_id = recording_url.split("/")[-1]
             extension = recording_id.split('.')[-1] if '.' in recording_id else "wav"
             result["recordingUrl"] = f"/recording/{recording_id}?ext={extension}"
-
+        
         return jsonify(result)
-
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/recording/<recording_id>', methods=['GET'])
 def get_recording(recording_id):
