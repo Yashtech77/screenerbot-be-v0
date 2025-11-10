@@ -133,24 +133,16 @@ def create_assistant():
                     }
                 ]
             },
-            # 'voice': {
-            #     'provider': 'vapi',
-            #     'voiceId': 'Neha'
-            # },
-            # 'transcriber': {
-            #     'provider': 'deepgram',
-            #     'model': 'nova-2',
-            #     'language': 'multi'
-            # },
-             'voice': {
-                'provider': '11labs',
-                'voiceId': 'nlRBcodAo9LA6ChkhS0i'
+            'voice': {
+                'provider': 'vapi',
+                'voiceId': 'Neha'
             },
             'transcriber': {
                 'provider': 'deepgram',
                 'model': 'nova-2',
                 'language': 'multi'
             },
+            
             'hooks': [{
                 'on': 'customer.speech.timeout',
                 'options': {
